@@ -1,6 +1,10 @@
 package com.demo.concurrent.deadlock;
 
-public class DeadLockTask {
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+
+public class ThreadMXBeanDetection {
     private static void deadLock(Object lock1, Object lock2) {
         synchronized (lock1) {
             try {
@@ -20,10 +24,20 @@ public class DeadLockTask {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         Object lock1 = new Object();
         Object lock2 = new Object();
         new Thread(() -> deadLock(lock1, lock2), "Thread-A").start();
         new Thread(() -> deadLock(lock2, lock1), "Thread-B").start();
+
+        Thread.sleep(1000);
+        ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        long[] deadlockedThreads = threadMXBean.findDeadlockedThreads();
+        if (deadlockedThreads != null && deadlockedThreads.length > 0) {
+            for (long deadlockedThread : deadlockedThreads) {
+                ThreadInfo threadInfo = threadMXBean.getThreadInfo(deadlockedThread);
+                System.out.println(String.format("%s发生死锁", threadInfo.getThreadName()));
+            }
+        }
     }
 }
