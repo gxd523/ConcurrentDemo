@@ -12,7 +12,7 @@ public class JoinTask {
                 TimeUnit.SECONDS.sleep(3);
 //                mainThread.interrupt();
                 TimeUnit.SECONDS.sleep(3);
-                System.out.println(mainThread.getState());
+                System.out.printf("%s...%s\n", mainThread.getName(), mainThread.getState());
             } catch (InterruptedException e) {
                 System.out.println(String.format("%s...被中断了(sleep)", Thread.currentThread().getName()));
             }
