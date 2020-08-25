@@ -3,35 +3,34 @@ package com.demo.concurrent.interview;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProducerConsumerMode implements Runnable {
-    private final BlockingQueue<Integer> blockingQueue;
-    private final boolean isProducer;
-
-    public ProducerConsumerMode(BlockingQueue<Integer> blockingQueue, boolean isProducer) {
-        this.blockingQueue = blockingQueue;
-        this.isProducer = isProducer;
-    }
-
-    @Override
-    public void run() {
-        for (int i = 0; i < 100; i++) {
-            try {
-                Thread.sleep(0);// 0秒也会耗时一下，会影响被notify的拿到锁，还是下一个循环
-                if (isProducer) {
-                    blockingQueue.put(i);
-                } else {
-                    blockingQueue.take();
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
+/**
+ * 生产、消费不能同时进行
+ * 产品剩10个时，停止生产
+ */
+public class ProducerConsumerMode {
     public static void main(String[] args) {
         BlockingQueue<Integer> blockingQueue = new BlockingQueue<>();
-        new Thread(new ProducerConsumerMode(blockingQueue, true), "Producer-1").start();
-        new Thread(new ProducerConsumerMode(blockingQueue, false), "Consumer-1").start();
+        new Thread(() -> {
+            for (int i = 0; i < 100; i++) {
+                try {
+                    Thread.sleep(0);// 0秒也会耗时一下，会影响被notify的拿到锁，还是下一个循环
+                    blockingQueue.put(i);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "Producer-1").start();
+
+        new Thread(() -> {
+            for (int i = 0; i < 100; i++) {
+                try {
+                    Thread.sleep(0);// 0秒也会耗时一下，会影响被notify的拿到锁，还是下一个循环
+                    blockingQueue.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "Consumer-1").start();
     }
 
     static class BlockingQueue<T> {
@@ -47,8 +46,12 @@ public class ProducerConsumerMode implements Runnable {
             notifyAll();
         }
 
+        /**
+         * 注意while不能改成if, 如果2个消费者都在这里wait，接着生产者生产了1个商品，
+         * 此时2个消费者都被唤醒，但只有一个能拿到锁并消费了商品后，另一个消费者再拿锁，此时已没有商品了
+         */
         public synchronized void take() throws InterruptedException {
-            while (list.size() == 0) {// 注意这里不能改成if, 因为多线程时,如果只剩1件商品，接下来两个消费者一次获得锁，第二个消费者就会数组越界
+            while (list.size() == 0) {
                 wait();
             }
             T id = list.remove(0);
