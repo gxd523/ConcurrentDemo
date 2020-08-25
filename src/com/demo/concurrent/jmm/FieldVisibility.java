@@ -1,43 +1,48 @@
 package com.demo.concurrent.jmm;
 
-import java.util.concurrent.CountDownLatch;
-
+/**
+ * 可见性问题演示
+ */
 public class FieldVisibility {
-    CountDownLatch countDownLatch = new CountDownLatch(2);
     int a = 1;
     int b = 2;
 
+    private void change() {
+        a = 3;
+        b = a;
+    }
+
+    /**
+     * 不要加if半段之类的
+     * System.out不具有原子性，可能执行一半切换到change()，所以不能先打印a
+     *
+     * b = 3, a = 1
+     * print()所在线程只同步了b的值，没同步a的值
+     */
+    private void print() {
+        System.out.printf("b = %s, a = %s\n", b, a);
+    }
+
     public static void main(String[] args) {
         while (true) {
-            FieldVisibility fieldVisibility = new FieldVisibility();
+            FieldVisibility test = new FieldVisibility();
             new Thread(() -> {
-                fieldVisibility.countDownLatch.countDown();
                 try {
-                    fieldVisibility.countDownLatch.await();
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                fieldVisibility.write();
+                test.change();
             }).start();
 
             new Thread(() -> {
-                fieldVisibility.countDownLatch.countDown();
                 try {
-                    fieldVisibility.countDownLatch.await();
+                    Thread.sleep(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                fieldVisibility.read();
+                test.print();
             }).start();
         }
-    }
-
-    private void write() {
-        a = 3;
-        b = 3;
-    }
-
-    private void read() {
-        System.out.println(String.format("b = %s, a = %s", b, a));
     }
 }
