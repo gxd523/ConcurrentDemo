@@ -11,18 +11,19 @@ public class SleepInterruptTask implements Runnable {
         Runnable task = new SleepInterruptTask();
         Thread thread = new Thread(task);
         thread.start();
-        Thread.sleep(6500);
+        TimeUnit.SECONDS.sleep(5);
         thread.interrupt();
     }
 
     @Override
     public void run() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             System.out.println(dateFormat.format(new Date()));
             try {
                 TimeUnit.SECONDS.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                break;
             }
         }
     }

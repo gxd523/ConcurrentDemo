@@ -47,7 +47,9 @@ public class OutOfOrderExecution {
             threadA.join();
             threadB.join();
 
-            System.out.println(String.format("x = %s, y = %s , i = %s", x, y, i));
+            if (!(x == 0 && y == 1) && !(y == 0 && x == 1)) {// 打印异常情况
+                System.out.printf("x = %s, y = %s , i = %s%n", x, y, i);
+            }
         }
     }
 }
